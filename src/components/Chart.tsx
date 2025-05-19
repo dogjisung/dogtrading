@@ -22,7 +22,8 @@ const Chart: React.FC<ChartProps> = ({ interval, symbol, theme, indicators }) =>
   const vwapSeriesRef = useRef<any>(null)
   const markersRef = useRef<SeriesMarker<Time>[]>([])
   const drawPointsRef = useRef<{ time: Time; value: number }[]>([])
-  // ref for countdown price line on axis
+  // refs for axis price label and countdown label
+  const priceLabelLineRef = useRef<any>(null)
   const countdownLineRef = useRef<any>(null)
   // countdown timer state for candle completion
   const [countdown, setCountdown] = useState('00:00')
@@ -89,15 +90,11 @@ const Chart: React.FC<ChartProps> = ({ interval, symbol, theme, indicators }) =>
         horzLine: { color: '#757575', style: LineStyle.Dotted, width: 1, visible: true, labelVisible: false, labelBackgroundColor: '#4c525e' },
       },
     })
-    const priceSeries = priceChart.addSeries(CandlestickSeries)
+    const priceSeries = priceChart.addSeries(CandlestickSeries, { priceLineVisible: false, lastValueVisible: false })
     priceSeriesRef.current = priceSeries
-    // create price line for countdown label on right axis (cast to any to allow custom styling)
-    countdownLineRef.current = priceSeries.createPriceLine({
-      price: 0, // will update after data load
-      color: 'transparent',
-      axisLabelVisible: true,
-      title: countdown,
-    } as any)
+    // create axis label for price and countdown stacked
+    priceLabelLineRef.current = priceSeries.createPriceLine({ price: 0, color: 'transparent', axisLabelVisible: true, title: '' } as any)
+    countdownLineRef.current = priceSeries.createPriceLine({ price: 0, color: 'transparent', axisLabelVisible: true, title: '' } as any)
     // initialize markers plugin
     markersApiRef.current = createSeriesMarkers(priceSeries, [], { zOrder: 'top' })
     // VWAP series
@@ -210,14 +207,12 @@ const Chart: React.FC<ChartProps> = ({ interval, symbol, theme, indicators }) =>
         macdLine.setData(macdTime.slice(9).map((t, i) => ({ time: t, value: macdVals[i + (26 - 12) - 9] })))
         signalLine.setData(macdTime.slice(9).map((t, i) => ({ time: t, value: signalLineArr[i] })))
         macdHist.setData(macdTime.slice(9).map((t, i) => ({ time: t, value: macdHistArr[i] })))
-        // initial countdown label setup: position at last close and color based on candle direction
+        // update axis labels (price and countdown) stacked, color based on candle direction
         const lastCandle = rawData[rawData.length - 1]
         const lastOpen = parseFloat(lastCandle[1]); const lastClose = parseFloat(lastCandle[4])
-        countdownLineRef.current?.applyOptions({
-          price: lastClose,
-          axisLabelBackgroundColor: lastClose > lastOpen ? '#26a69a' : '#ef5350',
-          axisLabelColor: '#fff',
-        } as any)
+        const bgColor = lastClose > lastOpen ? '#26a69a' : '#ef5350'
+        priceLabelLineRef.current?.applyOptions({ price: lastClose, title: lastClose.toFixed(2), backgroundColor: bgColor, color: '#fff' } as any)
+        countdownLineRef.current?.applyOptions({ price: lastClose, title: countdown, backgroundColor: bgColor, color: '#fff' } as any)
       })
 
     // WebSocket for real-time updates
@@ -240,12 +235,10 @@ const Chart: React.FC<ChartProps> = ({ interval, symbol, theme, indicators }) =>
       // update price & volume
       priceSeriesRef.current?.update({ time, open, high, low, close })
       volumeSeries.update({ time, value: vol, color: close > open ? '#26a69a' : '#ef5350' })
-      // update countdown label position and color on new candle
-      countdownLineRef.current?.applyOptions({
-        price: close,
-        axisLabelBackgroundColor: close > open ? '#26a69a' : '#ef5350',
-        axisLabelColor: '#fff',
-      } as any)
+      // update axis labels (price and countdown) on live candle
+      const liveBg = close > open ? '#26a69a' : '#ef5350'
+      priceLabelLineRef.current?.applyOptions({ price: close, title: close.toFixed(2), backgroundColor: liveBg, color: '#fff' } as any)
+      countdownLineRef.current?.applyOptions({ price: close, title: countdown, backgroundColor: liveBg, color: '#fff' } as any)
     }
 
     return () => {
