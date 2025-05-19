@@ -33,7 +33,7 @@ const Chart: React.FC<ChartProps> = ({ interval, symbol, theme, indicators }) =>
   // helper to position overlay under price label
   const updateOverlayPosition = () => {
     if (overlayRef.current && priceChartRef.current) {
-      const coord = (priceChartRef.current as any).priceScale('right').priceToCoordinate(lastPriceRef.current)
+      const coord = (priceChartRef.current as any).priceScale().priceToCoordinate(lastPriceRef.current)
       if (coord !== null) {
         // position countdown overlay below the price label
         const halfHeight = overlayRef.current.offsetHeight / 2
