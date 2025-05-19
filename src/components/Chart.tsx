@@ -26,6 +26,8 @@ const Chart: React.FC<ChartProps> = ({ interval, symbol, theme, indicators }) =>
   const countdownLineRef = useRef<any>(null)
   // ref for last price
   const lastPriceRef = useRef<number>(0)
+  // countdown timer state for candle completion
+  const [countdown, setCountdown] = useState('00:00')
   // context menu state
   const [menuVisible, setMenuVisible] = useState(false)
   const [menuPosition, setMenuPosition] = useState({ x: 0, y: 0 })
