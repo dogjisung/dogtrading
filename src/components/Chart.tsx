@@ -326,11 +326,12 @@ const Chart: React.FC<ChartProps> = ({ interval, symbol, theme, indicators }) =>
 
   return (
     <div className="chart-container">
-      <div ref={priceRef} className="price-container" />
+      <div ref={priceRef} className="price-container">
+        <div ref={overlayRef} className="countdown-overlay">{countdown}</div>
+      </div>
       <div ref={volumeRef} className="volume-container" />
       <div ref={rsiRef} className="indicator-container" />
       <div ref={macdRef} className="indicator-container" />
-      <div ref={overlayRef} className="countdown-overlay">{countdown}</div>
     </div>
   )
 }
