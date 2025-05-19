@@ -1,15 +1,15 @@
 {
   "files": {
-    "main.css": "/dogtrading/static/css/main.c170320b.css",
-    "main.js": "/dogtrading/static/js/main.c7c07a2b.js",
+    "main.css": "/dogtrading/static/css/main.2be33ba4.css",
+    "main.js": "/dogtrading/static/js/main.331c3c52.js",
     "static/js/453.1eb8a3c2.chunk.js": "/dogtrading/static/js/453.1eb8a3c2.chunk.js",
     "index.html": "/dogtrading/index.html",
-    "main.c170320b.css.map": "/dogtrading/static/css/main.c170320b.css.map",
-    "main.c7c07a2b.js.map": "/dogtrading/static/js/main.c7c07a2b.js.map",
+    "main.2be33ba4.css.map": "/dogtrading/static/css/main.2be33ba4.css.map",
+    "main.331c3c52.js.map": "/dogtrading/static/js/main.331c3c52.js.map",
     "453.1eb8a3c2.chunk.js.map": "/dogtrading/static/js/453.1eb8a3c2.chunk.js.map"
   },
   "entrypoints": [
-    "static/css/main.c170320b.css",
-    "static/js/main.c7c07a2b.js"
+    "static/css/main.2be33ba4.css",
+    "static/js/main.331c3c52.js"
   ]
 }
