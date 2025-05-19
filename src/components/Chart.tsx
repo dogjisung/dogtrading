@@ -1,4 +1,4 @@
-import React, { useRef, useEffect } from 'react'
+import React, { useRef, useEffect, useState } from 'react'
 import { createChart, createSeriesMarkers, CandlestickSeries, HistogramSeries, LineSeries, CrosshairMode, LineStyle, ColorType, Time, TickMarkType, IChartApi, SeriesMarker } from 'lightweight-charts'
 import './Chart.css'
 
@@ -22,6 +22,8 @@ const Chart: React.FC<ChartProps> = ({ interval, symbol, theme, indicators }) =>
   const vwapSeriesRef = useRef<any>(null)
   const markersRef = useRef<SeriesMarker<Time>[]>([])
   const drawPointsRef = useRef<{ time: Time; value: number }[]>([])
+  // countdown timer state for candle completion
+  const [countdown, setCountdown] = useState('00:00')
 
   useEffect(() => {
     if (!priceRef.current || !volumeRef.current || !rsiRef.current || !macdRef.current) return
@@ -255,13 +257,45 @@ const Chart: React.FC<ChartProps> = ({ interval, symbol, theme, indicators }) =>
     }
   }, [indicators])
 
+  // update countdown every second based on interval
+  useEffect(() => {
+    const getSecondsLeft = () => {
+      const now = Math.floor(Date.now() / 1000)
+      let period = 60
+      switch (interval) {
+        case '1m': period = 60; break
+        case '5m': period = 5 * 60; break
+        case '15m': period = 15 * 60; break
+        case '1h': period = 60 * 60; break
+        case '4h': period = 4 * 60 * 60; break
+        case '1d': period = 24 * 60 * 60; break
+        default: period = 60
+      }
+      const next = Math.ceil(now / period) * period
+      return next - now
+    }
+    const updateTimer = () => {
+      const s = getSecondsLeft()
+      const h = Math.floor(s / 3600)
+      const m = Math.floor((s % 3600) / 60)
+      const sec = s % 60
+      const formatted = (h > 0 ? `${String(h).padStart(2,'0')}:` : '') +
+        `${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`
+      setCountdown(formatted)
+    }
+    updateTimer()
+    const id = setInterval(updateTimer, 1000)
+    return () => clearInterval(id)
+  }, [interval])
+
   return (
-    <>
+    <div className="chart-container">
       <div ref={priceRef} className="price-container" />
       <div ref={volumeRef} className="volume-container" />
       <div ref={rsiRef} className="indicator-container" />
       <div ref={macdRef} className="indicator-container" />
-    </>
+      <div className="countdown-overlay">{countdown}</div>
+    </div>
   )
 }
 
