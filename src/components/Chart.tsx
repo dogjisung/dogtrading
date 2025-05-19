@@ -243,10 +243,10 @@ const Chart: React.FC<ChartProps> = ({ interval, symbol, theme, indicators }) =>
     if (macdRef.current) {
       macdRef.current.style.display = indicators.includes('MACD') ? 'block' : 'none'
     }
-    // show or hide VWAP series on price chart
-    const showVWAP = indicators.includes('VWAP')
+    // show or hide 이동 평균선 series on price chart
+    const showMA = indicators.includes('이동 평균선')
     if (vwapSeriesRef.current) {
-      vwapSeriesRef.current.applyOptions({ visible: showVWAP })
+      vwapSeriesRef.current.applyOptions({ visible: showMA })
     }
     // adjust price container height to fill remaining space when no subcharts are visible
     if (priceRef.current) {

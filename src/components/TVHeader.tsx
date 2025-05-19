@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import './TVHeader.css'
 
 interface TVHeaderProps {
@@ -14,6 +14,37 @@ interface TVHeaderProps {
 
 const TVHeader: React.FC<TVHeaderProps> = ({ symbol, onSymbolChange, interval, onIntervalChange, theme, onThemeToggle, indicators, onIndicatorsChange }) => {
   const [dropdownOpen, setDropdownOpen] = useState(false)
+  const [countdown, setCountdown] = useState('00:00')
+
+  useEffect(() => {
+    const getSeconds = () => {
+      const nowSec = Math.floor(Date.now() / 1000)
+      let sec = 60
+      switch (interval) {
+        case '1m': sec = 60; break
+        case '5m': sec = 5 * 60; break
+        case '15m': sec = 15 * 60; break
+        case '1h': sec = 60 * 60; break
+        case '4h': sec = 4 * 60 * 60; break
+        case '1d': sec = 24 * 60 * 60; break
+        default: sec = 60
+      }
+      const next = Math.ceil(nowSec / sec) * sec
+      return next - nowSec
+    }
+    const update = () => {
+      const s = getSeconds()
+      const h = Math.floor(s / 3600)
+      const m = Math.floor((s % 3600) / 60)
+      const sec = s % 60
+      const formatted = (h > 0 ? `${String(h).padStart(2,'0')}:` : '') + `${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`
+      setCountdown(formatted)
+    }
+    update()
+    const id = setInterval(update, 1000)
+    return () => clearInterval(id)
+  }, [interval])
+
   return (
     <div className="tv-header">
       <div className="tv-header-left">
@@ -42,7 +73,7 @@ const TVHeader: React.FC<TVHeaderProps> = ({ symbol, onSymbolChange, interval, o
           <label onClick={() => setDropdownOpen(!dropdownOpen)}>지표 ▾</label>
           {dropdownOpen && (
             <ul className="tv-dropdown">
-              {['VWAP', 'RSI', '볼린저 밴드', '거래량', 'MACD'].map(option => (
+              {['이동 평균선', 'RSI', '볼린저 밴드', '거래량', 'MACD'].map(option => (
                 <li key={option}>
                   <label>
                     <input
@@ -61,6 +92,11 @@ const TVHeader: React.FC<TVHeaderProps> = ({ symbol, onSymbolChange, interval, o
               ))}
             </ul>
           )}
+        </div>
+      </div>
+      <div className="tv-header-right">
+        <div className="tv-control countdown">
+          봉 완성 카운트다운 <span>{countdown}</span>
         </div>
         <button className="tv-btn theme-toggle" onClick={onThemeToggle}>
           {theme === 'light' ? '🌞' : '🌙'}
