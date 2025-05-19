@@ -95,7 +95,6 @@ const Chart: React.FC<ChartProps> = ({ interval, symbol, theme, indicators }) =>
     countdownLineRef.current = priceSeries.createPriceLine({
       price: 0, // will update after data load
       color: 'transparent',
-      lineWidth: 0,
       axisLabelVisible: true,
       axisLabelBackgroundColor: 'rgba(0,151,167,0.9)',
       axisLabelColor: '#fff',
