@@ -96,8 +96,6 @@ const Chart: React.FC<ChartProps> = ({ interval, symbol, theme, indicators }) =>
       price: 0, // will update after data load
       color: 'transparent',
       axisLabelVisible: true,
-      axisLabelBackgroundColor: 'rgba(0,151,167,0.9)',
-      axisLabelColor: '#fff',
       title: countdown,
     })
     // initialize markers plugin
