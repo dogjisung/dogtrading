@@ -266,6 +266,8 @@ const Chart: React.FC<ChartProps> = ({ interval, symbol, theme, indicators }) =>
     }
 
     return () => {
+      // clear countdown line ref before disposing chart
+      countdownLineRef.current = null
       ws.close()
       priceChart.remove()
       volumeChart.remove()
