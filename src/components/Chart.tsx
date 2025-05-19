@@ -24,8 +24,21 @@ const Chart: React.FC<ChartProps> = ({ interval, symbol, theme, indicators }) =>
   const drawPointsRef = useRef<{ time: Time; value: number }[]>([])
   // ref for countdown price line on axis
   const countdownLineRef = useRef<any>(null)
+  // overlay and last price refs for countdown positioning
+  const overlayRef = useRef<HTMLDivElement>(null)
+  const lastPriceRef = useRef<number>(0)
   // countdown timer state for candle completion
   const [countdown, setCountdown] = useState('00:00')
+
+  // helper to position overlay under price label
+  const updateOverlayPosition = () => {
+    if (overlayRef.current && priceChartRef.current) {
+      const coord = (priceChartRef.current as any).priceScale().priceToCoordinate(lastPriceRef.current)
+      if (coord !== null) {
+        overlayRef.current.style.top = `${coord - overlayRef.current.offsetHeight / 2}px`
+      }
+    }
+  }
 
   useEffect(() => {
     const getSecondsLeft = () => {
@@ -51,8 +64,11 @@ const Chart: React.FC<ChartProps> = ({ interval, symbol, theme, indicators }) =>
       const formatted = (h > 0 ? `${String(h).padStart(2,'0')}:` : '') +
         `${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`
       setCountdown(formatted)
-      // update countdown title on price axis
-      countdownLineRef.current?.applyOptions({ title: formatted } as any)
+      // update overlay text and reposition
+      if (overlayRef.current) {
+        overlayRef.current.textContent = formatted
+        updateOverlayPosition()
+      }
     }
     updateTimer()
     const id = setInterval(updateTimer, 1000)
@@ -212,9 +228,9 @@ const Chart: React.FC<ChartProps> = ({ interval, symbol, theme, indicators }) =>
         macdLine.setData(macdTime.slice(9).map((t, i) => ({ time: t, value: macdVals[i + (26 - 12) - 9] })))
         signalLine.setData(macdTime.slice(9).map((t, i) => ({ time: t, value: signalLineArr[i] })))
         macdHist.setData(macdTime.slice(9).map((t, i) => ({ time: t, value: macdHistArr[i] })))
-        // initial countdown label setup: position at last close
-        const lastPrice = candleData[candleData.length - 1].close
-        countdownLineRef.current?.applyOptions({ price: lastPrice, title: countdown } as any)
+        // track last price and position overlay
+        lastPriceRef.current = candleData[candleData.length - 1].close
+        updateOverlayPosition()
       })
 
     // WebSocket for real-time updates
@@ -237,8 +253,9 @@ const Chart: React.FC<ChartProps> = ({ interval, symbol, theme, indicators }) =>
       // update price & volume
       priceSeriesRef.current?.update({ time, open, high, low, close })
       volumeSeries.update({ time, value: vol, color: close > open ? '#26a69a' : '#ef5350' })
-      // update countdown label position on live candle
-      countdownLineRef.current?.applyOptions({ price: close, title: countdown } as any)
+      // update last price and reposition overlay
+      lastPriceRef.current = close
+      updateOverlayPosition()
     }
 
     return () => {
@@ -306,12 +323,13 @@ const Chart: React.FC<ChartProps> = ({ interval, symbol, theme, indicators }) =>
   }, [indicators])
 
   return (
-    <>
+    <div className="chart-container">
       <div ref={priceRef} className="price-container" />
       <div ref={volumeRef} className="volume-container" />
       <div ref={rsiRef} className="indicator-container" />
       <div ref={macdRef} className="indicator-container" />
-    </>
+      <div ref={overlayRef} className="countdown-overlay">{countdown}</div>
+    </div>
   )
 }
 
