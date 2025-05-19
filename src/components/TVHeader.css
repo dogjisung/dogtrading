@@ -1,0 +1,116 @@
+.tv-header {
+  width: 100%;
+  min-height: 48px;
+  height: auto;
+  background-color: #131722;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 16px;
+  color: #fff;
+  box-sizing: border-box;
+  font-family: Arial, sans-serif;
+}
+
+.tv-header-left {
+  display: flex;
+  align-items: center;
+}
+
+.tv-logo {
+  font-weight: bold;
+  font-size: 18px;
+  margin-right: 16px;
+}
+
+.tv-control {
+  display: flex;
+  align-items: center;
+  margin-right: 12px;
+  flex-shrink: 0;
+  position: relative;
+}
+
+.tv-control label {
+  margin-right: 8px;
+  font-size: 15px;
+  line-height: 28px;
+}
+
+.tv-control select {
+  background-color: #262938;
+  border: 1px solid #3a3f51;
+  border-radius: 4px;
+  color: #fff;
+  font-size: 14px;
+  padding: 6px 12px;
+  min-height: 32px;
+  line-height: normal;
+  outline: none;
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+}
+
+.tv-control select:focus {
+  border-color: #5a5f75;
+}
+
+.tv-btn {
+  background: transparent;
+  border: none;
+  color: #fff;
+  font-size: 16px;
+  margin: 0 4px;
+  cursor: pointer;
+  padding: 4px;
+}
+
+.tv-header-right {
+  display: flex;
+  align-items: center;
+}
+
+.tv-header-left > .tv-control:nth-child(2) select {
+  min-width: 120px;
+}
+
+.tv-header-left > .tv-control:nth-child(3) select {
+  min-width: 60px;
+}
+
+/* Indicator dropdown submenu */
+.tv-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  background-color: #262938;
+  border: 1px solid #3a3f51;
+  border-radius: 4px;
+  list-style: none;
+  padding: 8px;
+  margin: 4px 0 0;
+  z-index: 1000;
+  max-height: 160px;
+  overflow-y: auto;
+}
+
+.tv-dropdown li {
+  margin-bottom: 4px;
+}
+
+.tv-dropdown li:last-child {
+  margin-bottom: 0;
+}
+
+/* Style checkbox inside dropdown */
+.tv-dropdown input[type="checkbox"] {
+  margin-right: 8px;
+  cursor: pointer;
+}
+
+/* Theme toggle button spacing */
+.theme-toggle {
+  margin-left: 24px;
+} 
