@@ -22,9 +22,6 @@ const Chart: React.FC<ChartProps> = ({ interval, symbol, theme, indicators }) =>
   const vwapSeriesRef = useRef<any>(null)
   const markersRef = useRef<SeriesMarker<Time>[]>([])
   const drawPointsRef = useRef<{ time: Time; value: number }[]>([])
-  // refs for axis price label and countdown label
-  const priceLabelLineRef = useRef<any>(null)
-  const countdownLineRef = useRef<any>(null)
   // countdown timer state for candle completion
   const [countdown, setCountdown] = useState('00:00')
 
@@ -52,8 +49,6 @@ const Chart: React.FC<ChartProps> = ({ interval, symbol, theme, indicators }) =>
       const formatted = (h > 0 ? `${String(h).padStart(2,'0')}:` : '') +
         `${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`
       setCountdown(formatted)
-      // update countdown title on price axis
-      countdownLineRef.current?.applyOptions({ title: formatted })
     }
     updateTimer()
     const id = setInterval(updateTimer, 1000)
@@ -90,13 +85,8 @@ const Chart: React.FC<ChartProps> = ({ interval, symbol, theme, indicators }) =>
         horzLine: { color: '#757575', style: LineStyle.Dotted, width: 1, visible: true, labelVisible: false, labelBackgroundColor: '#4c525e' },
       },
     })
-    const priceSeries = priceChart.addSeries(CandlestickSeries, { priceLineVisible: false, lastValueVisible: false })
+    const priceSeries = priceChart.addSeries(CandlestickSeries)
     priceSeriesRef.current = priceSeries
-    // create axis label for price and countdown stacked
-    priceLabelLineRef.current = priceSeries.createPriceLine({ price: 0, color: 'transparent', axisLabelVisible: true, title: '' } as any)
-    countdownLineRef.current = priceSeries.createPriceLine({ price: 0, color: 'transparent', axisLabelVisible: true, title: '' } as any)
-    // initialize markers plugin
-    markersApiRef.current = createSeriesMarkers(priceSeries, [], { zOrder: 'top' })
     // VWAP series
     const vwapSeries = priceChart.addSeries(LineSeries, { color: '#ff00ff', lineWidth: 1, priceLineVisible: false, lastValueVisible: false })
     vwapSeriesRef.current = vwapSeries
@@ -207,12 +197,6 @@ const Chart: React.FC<ChartProps> = ({ interval, symbol, theme, indicators }) =>
         macdLine.setData(macdTime.slice(9).map((t, i) => ({ time: t, value: macdVals[i + (26 - 12) - 9] })))
         signalLine.setData(macdTime.slice(9).map((t, i) => ({ time: t, value: signalLineArr[i] })))
         macdHist.setData(macdTime.slice(9).map((t, i) => ({ time: t, value: macdHistArr[i] })))
-        // update axis labels (price and countdown) stacked, color based on candle direction
-        const lastCandle = rawData[rawData.length - 1]
-        const lastOpen = parseFloat(lastCandle[1]); const lastClose = parseFloat(lastCandle[4])
-        const bgColor = lastClose > lastOpen ? '#26a69a' : '#ef5350'
-        priceLabelLineRef.current?.applyOptions({ price: lastClose, title: lastClose.toFixed(2), backgroundColor: bgColor, color: '#fff' } as any)
-        countdownLineRef.current?.applyOptions({ price: lastClose, title: countdown, backgroundColor: bgColor, color: '#fff' } as any)
       })
 
     // WebSocket for real-time updates
@@ -235,10 +219,6 @@ const Chart: React.FC<ChartProps> = ({ interval, symbol, theme, indicators }) =>
       // update price & volume
       priceSeriesRef.current?.update({ time, open, high, low, close })
       volumeSeries.update({ time, value: vol, color: close > open ? '#26a69a' : '#ef5350' })
-      // update axis labels (price and countdown) on live candle
-      const liveBg = close > open ? '#26a69a' : '#ef5350'
-      priceLabelLineRef.current?.applyOptions({ price: close, title: close.toFixed(2), backgroundColor: liveBg, color: '#fff' } as any)
-      countdownLineRef.current?.applyOptions({ price: close, title: countdown, backgroundColor: liveBg, color: '#fff' } as any)
     }
 
     return () => {
@@ -311,6 +291,7 @@ const Chart: React.FC<ChartProps> = ({ interval, symbol, theme, indicators }) =>
       <div ref={volumeRef} className="volume-container" />
       <div ref={rsiRef} className="indicator-container" />
       <div ref={macdRef} className="indicator-container" />
+      <div className="countdown-overlay">{countdown}</div>
     </div>
   )
 }
