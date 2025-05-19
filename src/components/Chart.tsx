@@ -1,5 +1,5 @@
 import React, { useRef, useEffect, useState } from 'react'
-import { createChart, createSeriesMarkers, CandlestickSeries, HistogramSeries, LineSeries, CrosshairMode, LineStyle, ColorType, Time, TickMarkType, IChartApi, SeriesMarker } from 'lightweight-charts'
+import { createChart, createSeriesMarkers, CandlestickSeries, HistogramSeries, LineSeries, CrosshairMode, LineStyle, ColorType, Time, TickMarkType, IChartApi, SeriesMarker, PriceScaleMode } from 'lightweight-charts'
 import './Chart.css'
 
 interface ChartProps { interval: string; symbol: string; theme: 'light' | 'dark'; indicators: string[] }
@@ -29,13 +29,27 @@ const Chart: React.FC<ChartProps> = ({ interval, symbol, theme, indicators }) =>
   const lastPriceRef = useRef<number>(0)
   // countdown timer state for candle completion
   const [countdown, setCountdown] = useState('00:00')
+  // context menu state
+  const [menuVisible, setMenuVisible] = useState(false)
+  const [menuPosition, setMenuPosition] = useState({ x: 0, y: 0 })
+  // scale options state
+  const [autoScale, setAutoScale] = useState(true)
+  const [priceLock, setPriceLock] = useState(false)
+  const [scalePriceChartOnly, setScalePriceChartOnly] = useState(false)
+  const [invertScale, setInvertScale] = useState(false)
+  const [scaleType, setScaleType] = useState<'regular'|'percent'|'index100'|'log'>('regular')
+  // toggle options state
+  const [showSymbolNameLabel, setShowSymbolNameLabel] = useState(true)
+  const [showSymbolPriceLabel, setShowSymbolPriceLabel] = useState(true)
+  const [showSymbolPrevCloseLabel, setShowSymbolPrevCloseLabel] = useState(true)
+  const [showCountdown, setShowCountdown] = useState(true)
 
-  // helper to position overlay under price label
+  // helper to position overlay under price label using right price scale
   const updateOverlayPosition = () => {
     if (overlayRef.current && priceChartRef.current) {
-      const coord = (priceChartRef.current as any).priceScale().priceToCoordinate(lastPriceRef.current)
+      const scaleApi = (priceChartRef.current as any).priceScale('right')
+      const coord = scaleApi.priceToCoordinate(lastPriceRef.current)
       if (coord !== null) {
-        // position countdown overlay at the price label coordinate
         overlayRef.current.style.top = `${coord}px`
       }
     }
@@ -314,10 +328,57 @@ const Chart: React.FC<ChartProps> = ({ interval, symbol, theme, indicators }) =>
     }
   }, [indicators])
 
+  // context menu handlers
+  const handleContextMenu = (e: React.MouseEvent) => {
+    e.preventDefault()
+    if (!priceRef.current) return
+    const rect = priceRef.current.getBoundingClientRect()
+    setMenuPosition({ x: e.clientX - rect.left, y: e.clientY - rect.top })
+    setMenuVisible(true)
+  }
+  useEffect(() => {
+    const handleClick = () => setMenuVisible(false)
+    document.addEventListener('click', handleClick)
+    return () => document.removeEventListener('click', handleClick)
+  }, [])
+
+  // apply scale options when changed
+  useEffect(() => {
+    if (priceChartRef.current) {
+      let mode = PriceScaleMode.Normal
+      if (scaleType === 'percent') mode = PriceScaleMode.Percentage
+      else if (scaleType === 'index100') mode = PriceScaleMode.IndexedTo100
+      else if (scaleType === 'log') mode = PriceScaleMode.Logarithmic
+      priceChartRef.current.applyOptions({
+        rightPriceScale: { autoScale, invertScale, mode }
+      })
+    }
+  }, [autoScale, invertScale, scaleType])
+
   return (
     <div className="chart-container">
-      <div ref={priceRef} className="price-container">
-        <div ref={overlayRef} className="countdown-overlay">{countdown}</div>
+      <div ref={priceRef} className="price-container" onContextMenu={handleContextMenu}>
+        {showCountdown && <div ref={overlayRef} className="countdown-overlay">{countdown}</div>}
+        {menuVisible && (
+          <div className="axis-context-menu" style={{ top: menuPosition.y, left: menuPosition.x }}>
+            <ul>
+              <li onClick={() => setAutoScale(prev => !prev)}>{autoScale ? '✓ ' : ''}오토</li>
+              <li onClick={() => setPriceLock(prev => !prev)}>{priceLock ? '✓ ' : ''}바 레이소에 프라이스 잠금</li>
+              <li onClick={() => setScalePriceChartOnly(prev => !prev)}>{scalePriceChartOnly ? '✓ ' : ''}가격차트만 스케일</li>
+              <li onClick={() => setInvertScale(prev => !prev)}>{invertScale ? '✓ ' : ''}인버트 스케일</li>
+              <li className="separator" />
+              <li onClick={() => setScaleType('regular')}>{scaleType === 'regular' ? '✓ ' : ''}레귤러</li>
+              <li onClick={() => setScaleType('percent')}>{scaleType === 'percent' ? '✓ ' : ''}퍼센트</li>
+              <li onClick={() => setScaleType('index100')}>{scaleType === 'index100' ? '✓ ' : ''}처음을 100으로 잡기</li>
+              <li onClick={() => setScaleType('log')}>{scaleType === 'log' ? '✓ ' : ''}로그</li>
+              <li className="separator" />
+              <li onClick={() => setShowSymbolNameLabel(prev => !prev)}>{showSymbolNameLabel ? '✓ ' : ''}심볼네임 라벨</li>
+              <li onClick={() => setShowSymbolPriceLabel(prev => !prev)}>{showSymbolPriceLabel ? '✓ ' : ''}심볼 현재가 라벨</li>
+              <li onClick={() => setShowSymbolPrevCloseLabel(prev => !prev)}>{showSymbolPrevCloseLabel ? '✓ ' : ''}심볼 전일종가 라벨</li>
+              <li onClick={() => setShowCountdown(prev => !prev)}>{showCountdown ? '✓ ' : ''}볼린저 카운트다운</li>
+            </ul>
+          </div>
+        )}
       </div>
       <div ref={volumeRef} className="volume-container" />
       <div ref={rsiRef} className="indicator-container" />
