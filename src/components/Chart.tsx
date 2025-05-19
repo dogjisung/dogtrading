@@ -22,6 +22,8 @@ const Chart: React.FC<ChartProps> = ({ interval, symbol, theme, indicators }) =>
   const vwapSeriesRef = useRef<any>(null)
   const markersRef = useRef<SeriesMarker<Time>[]>([])
   const drawPointsRef = useRef<{ time: Time; value: number }[]>([])
+  // ref for countdown price line on axis
+  const countdownLineRef = useRef<any>(null)
   // countdown timer state for candle completion
   const [countdown, setCountdown] = useState('00:00')
 
@@ -49,6 +51,8 @@ const Chart: React.FC<ChartProps> = ({ interval, symbol, theme, indicators }) =>
       const formatted = (h > 0 ? `${String(h).padStart(2,'0')}:` : '') +
         `${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`
       setCountdown(formatted)
+      // update countdown title on price axis
+      countdownLineRef.current?.applyOptions({ title: formatted } as any)
     }
     updateTimer()
     const id = setInterval(updateTimer, 1000)
@@ -87,6 +91,17 @@ const Chart: React.FC<ChartProps> = ({ interval, symbol, theme, indicators }) =>
     })
     const priceSeries = priceChart.addSeries(CandlestickSeries)
     priceSeriesRef.current = priceSeries
+    // create countdown label on price axis (below default price marker)
+    countdownLineRef.current = priceSeries.createPriceLine({
+      price: 0,
+      color: 'transparent',
+      axisLabelVisible: true,
+      axisLabelBackgroundColor: '#00bcd4',
+      axisLabelTextColor: '#ffffff',
+      title: countdown,
+    } as any)
+    // initialize markers plugin
+    markersApiRef.current = createSeriesMarkers(priceSeries, [], { zOrder: 'top' })
     // VWAP series
     const vwapSeries = priceChart.addSeries(LineSeries, { color: '#ff00ff', lineWidth: 1, priceLineVisible: false, lastValueVisible: false })
     vwapSeriesRef.current = vwapSeries
@@ -197,6 +212,9 @@ const Chart: React.FC<ChartProps> = ({ interval, symbol, theme, indicators }) =>
         macdLine.setData(macdTime.slice(9).map((t, i) => ({ time: t, value: macdVals[i + (26 - 12) - 9] })))
         signalLine.setData(macdTime.slice(9).map((t, i) => ({ time: t, value: signalLineArr[i] })))
         macdHist.setData(macdTime.slice(9).map((t, i) => ({ time: t, value: macdHistArr[i] })))
+        // initial countdown label setup: position at last close
+        const lastPrice = candleData[candleData.length - 1].close
+        countdownLineRef.current?.applyOptions({ price: lastPrice, title: countdown } as any)
       })
 
     // WebSocket for real-time updates
@@ -219,6 +237,8 @@ const Chart: React.FC<ChartProps> = ({ interval, symbol, theme, indicators }) =>
       // update price & volume
       priceSeriesRef.current?.update({ time, open, high, low, close })
       volumeSeries.update({ time, value: vol, color: close > open ? '#26a69a' : '#ef5350' })
+      // update countdown label position on live candle
+      countdownLineRef.current?.applyOptions({ price: close, title: countdown } as any)
     }
 
     return () => {
@@ -286,13 +306,12 @@ const Chart: React.FC<ChartProps> = ({ interval, symbol, theme, indicators }) =>
   }, [indicators])
 
   return (
-    <div className="chart-container">
+    <>
       <div ref={priceRef} className="price-container" />
       <div ref={volumeRef} className="volume-container" />
       <div ref={rsiRef} className="indicator-container" />
       <div ref={macdRef} className="indicator-container" />
-      <div className="countdown-overlay">{countdown}</div>
-    </div>
+    </>
   )
 }
 
