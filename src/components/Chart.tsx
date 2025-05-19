@@ -22,8 +22,42 @@ const Chart: React.FC<ChartProps> = ({ interval, symbol, theme, indicators }) =>
   const vwapSeriesRef = useRef<any>(null)
   const markersRef = useRef<SeriesMarker<Time>[]>([])
   const drawPointsRef = useRef<{ time: Time; value: number }[]>([])
+  // ref for countdown price line on axis
+  const countdownLineRef = useRef<any>(null)
   // countdown timer state for candle completion
   const [countdown, setCountdown] = useState('00:00')
+
+  useEffect(() => {
+    const getSecondsLeft = () => {
+      const now = Math.floor(Date.now() / 1000)
+      let period = 60
+      switch (interval) {
+        case '1m': period = 60; break
+        case '5m': period = 5 * 60; break
+        case '15m': period = 15 * 60; break
+        case '1h': period = 60 * 60; break
+        case '4h': period = 4 * 60 * 60; break
+        case '1d': period = 24 * 60 * 60; break
+        default: period = 60
+      }
+      const next = Math.ceil(now / period) * period
+      return next - now
+    }
+    const updateTimer = () => {
+      const s = getSecondsLeft()
+      const h = Math.floor(s / 3600)
+      const m = Math.floor((s % 3600) / 60)
+      const sec = s % 60
+      const formatted = (h > 0 ? `${String(h).padStart(2,'0')}:` : '') +
+        `${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`
+      setCountdown(formatted)
+      // update countdown title on price axis
+      countdownLineRef.current?.applyOptions({ title: formatted })
+    }
+    updateTimer()
+    const id = setInterval(updateTimer, 1000)
+    return () => clearInterval(id)
+  }, [interval])
 
   useEffect(() => {
     if (!priceRef.current || !volumeRef.current || !rsiRef.current || !macdRef.current) return
@@ -57,6 +91,16 @@ const Chart: React.FC<ChartProps> = ({ interval, symbol, theme, indicators }) =>
     })
     const priceSeries = priceChart.addSeries(CandlestickSeries)
     priceSeriesRef.current = priceSeries
+    // create price line for countdown label on right axis
+    countdownLineRef.current = priceSeries.createPriceLine({
+      price: 0, // will update after data load
+      color: 'transparent',
+      lineWidth: 0,
+      axisLabelVisible: true,
+      axisLabelBackgroundColor: 'rgba(0,151,167,0.9)',
+      axisLabelColor: '#fff',
+      title: countdown,
+    })
     // initialize markers plugin
     markersApiRef.current = createSeriesMarkers(priceSeries, [], { zOrder: 'top' })
     // VWAP series
@@ -169,6 +213,9 @@ const Chart: React.FC<ChartProps> = ({ interval, symbol, theme, indicators }) =>
         macdLine.setData(macdTime.slice(9).map((t, i) => ({ time: t, value: macdVals[i + (26 - 12) - 9] })))
         signalLine.setData(macdTime.slice(9).map((t, i) => ({ time: t, value: signalLineArr[i] })))
         macdHist.setData(macdTime.slice(9).map((t, i) => ({ time: t, value: macdHistArr[i] })))
+        // update countdown price line to last close price
+        const lastPrice = candleData[candleData.length - 1].close
+        countdownLineRef.current?.applyOptions({ price: lastPrice })
       })
 
     // WebSocket for real-time updates
@@ -191,6 +238,8 @@ const Chart: React.FC<ChartProps> = ({ interval, symbol, theme, indicators }) =>
       // update price & volume
       priceSeriesRef.current?.update({ time, open, high, low, close })
       volumeSeries.update({ time, value: vol, color: close > open ? '#26a69a' : '#ef5350' })
+      // update countdown price line position to follow last price
+      countdownLineRef.current?.applyOptions({ price: close })
     }
 
     return () => {
@@ -257,44 +306,12 @@ const Chart: React.FC<ChartProps> = ({ interval, symbol, theme, indicators }) =>
     }
   }, [indicators])
 
-  // update countdown every second based on interval
-  useEffect(() => {
-    const getSecondsLeft = () => {
-      const now = Math.floor(Date.now() / 1000)
-      let period = 60
-      switch (interval) {
-        case '1m': period = 60; break
-        case '5m': period = 5 * 60; break
-        case '15m': period = 15 * 60; break
-        case '1h': period = 60 * 60; break
-        case '4h': period = 4 * 60 * 60; break
-        case '1d': period = 24 * 60 * 60; break
-        default: period = 60
-      }
-      const next = Math.ceil(now / period) * period
-      return next - now
-    }
-    const updateTimer = () => {
-      const s = getSecondsLeft()
-      const h = Math.floor(s / 3600)
-      const m = Math.floor((s % 3600) / 60)
-      const sec = s % 60
-      const formatted = (h > 0 ? `${String(h).padStart(2,'0')}:` : '') +
-        `${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`
-      setCountdown(formatted)
-    }
-    updateTimer()
-    const id = setInterval(updateTimer, 1000)
-    return () => clearInterval(id)
-  }, [interval])
-
   return (
     <div className="chart-container">
       <div ref={priceRef} className="price-container" />
       <div ref={volumeRef} className="volume-container" />
       <div ref={rsiRef} className="indicator-container" />
       <div ref={macdRef} className="indicator-container" />
-      <div className="countdown-overlay">{countdown}</div>
     </div>
   )
 }
