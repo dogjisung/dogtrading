@@ -68,6 +68,7 @@ const Chart: React.FC<ChartProps> = ({ interval, symbol, theme, indicators }) =>
       // update overlay text and reposition
       if (overlayRef.current) {
         overlayRef.current.textContent = formatted
+        updateOverlayPosition()
       }
     }
     updateTimer()
@@ -221,6 +222,7 @@ const Chart: React.FC<ChartProps> = ({ interval, symbol, theme, indicators }) =>
         macdHist.setData(macdTime.slice(9).map((t, i) => ({ time: t, value: macdHistArr[i] })))
         // track last price and position overlay
         lastPriceRef.current = candleData[candleData.length - 1].close
+        updateOverlayPosition()
       })
 
     // WebSocket for real-time updates
@@ -245,6 +247,7 @@ const Chart: React.FC<ChartProps> = ({ interval, symbol, theme, indicators }) =>
       volumeSeries.update({ time, value: vol, color: close > open ? '#26a69a' : '#ef5350' })
       // update last price and reposition overlay
       lastPriceRef.current = close
+      updateOverlayPosition()
     }
 
     return () => {

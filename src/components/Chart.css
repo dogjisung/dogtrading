@@ -37,7 +37,7 @@
 .countdown-overlay {
   position: absolute;
   right: 8px;
-  bottom: 0;
+  top: 0;
   background-color: rgba(0, 151, 167, 0.9);
   color: #fff;
   padding: 2px 8px;
@@ -45,5 +45,5 @@
   font-size: 12px;
   z-index: 10;
   pointer-events: none;
-  transform: none;
+  transform: translateY(100%);
 } 
