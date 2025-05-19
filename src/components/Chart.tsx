@@ -24,8 +24,7 @@ const Chart: React.FC<ChartProps> = ({ interval, symbol, theme, indicators }) =>
   const drawPointsRef = useRef<{ time: Time; value: number }[]>([])
   // ref for countdown price line on axis
   const countdownLineRef = useRef<any>(null)
-  // overlay and last price refs for countdown positioning
-  const overlayRef = useRef<HTMLDivElement>(null)
+  // ref for last price
   const lastPriceRef = useRef<number>(0)
   // countdown timer state for candle completion
   const [countdown, setCountdown] = useState('00:00')
@@ -43,20 +42,6 @@ const Chart: React.FC<ChartProps> = ({ interval, symbol, theme, indicators }) =>
   const [showSymbolPriceLabel, setShowSymbolPriceLabel] = useState(true)
   const [showSymbolPrevCloseLabel, setShowSymbolPrevCloseLabel] = useState(true)
   const [showCountdown, setShowCountdown] = useState(true)
-
-  // helper to position overlay under price label using right price scale
-  const updateOverlayPosition = () => {
-    if (overlayRef.current && priceChartRef.current) {
-      // use default price scale (right axis)
-      const scaleApi = (priceChartRef.current as any).priceScale()
-      if (typeof scaleApi.priceToCoordinate === 'function') {
-        const coord = scaleApi.priceToCoordinate(lastPriceRef.current)
-        if (coord !== null) {
-          overlayRef.current.style.top = `${coord}px`
-        }
-      }
-    }
-  }
 
   useEffect(() => {
     const getSecondsLeft = () => {
@@ -82,10 +67,9 @@ const Chart: React.FC<ChartProps> = ({ interval, symbol, theme, indicators }) =>
       const formatted = (h > 0 ? `${String(h).padStart(2,'0')}:` : '') +
         `${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`
       setCountdown(formatted)
-      // update overlay text and reposition
-      if (overlayRef.current) {
-        overlayRef.current.textContent = formatted
-        updateOverlayPosition()
+      // update countdown axis label
+      if (countdownLineRef.current) {
+        countdownLineRef.current.applyOptions({ price: lastPriceRef.current, title: formatted } as any)
       }
     }
     updateTimer()
@@ -125,6 +109,16 @@ const Chart: React.FC<ChartProps> = ({ interval, symbol, theme, indicators }) =>
     })
     const priceSeries = priceChart.addSeries(CandlestickSeries)
     priceSeriesRef.current = priceSeries
+    // create countdown axis label
+    countdownLineRef.current = priceSeries.createPriceLine({
+      price: lastPriceRef.current,
+      color: 'transparent',
+      lineWidth: 0,
+      axisLabelVisible: true,
+      axisLabelBackgroundColor: '#0097A7',
+      axisLabelTextColor: '#FFFFFF',
+      title: countdown,
+    } as any)
     // initialize markers plugin
     markersApiRef.current = createSeriesMarkers(priceSeries, [], { zOrder: 'top' })
     // VWAP series
@@ -239,7 +233,9 @@ const Chart: React.FC<ChartProps> = ({ interval, symbol, theme, indicators }) =>
         macdHist.setData(macdTime.slice(9).map((t, i) => ({ time: t, value: macdHistArr[i] })))
         // track last price and position overlay
         lastPriceRef.current = candleData[candleData.length - 1].close
-        updateOverlayPosition()
+        if (countdownLineRef.current) {
+          countdownLineRef.current.applyOptions({ price: lastPriceRef.current, title: countdown } as any)
+        }
       })
 
     // WebSocket for real-time updates
@@ -262,9 +258,11 @@ const Chart: React.FC<ChartProps> = ({ interval, symbol, theme, indicators }) =>
       // update price & volume
       priceSeriesRef.current?.update({ time, open, high, low, close })
       volumeSeries.update({ time, value: vol, color: close > open ? '#26a69a' : '#ef5350' })
-      // update last price and reposition overlay
+      // update last price and countdown label
       lastPriceRef.current = close
-      updateOverlayPosition()
+      if (countdownLineRef.current) {
+        countdownLineRef.current.applyOptions({ price: lastPriceRef.current, title: countdown } as any)
+      }
     }
 
     return () => {
@@ -361,7 +359,6 @@ const Chart: React.FC<ChartProps> = ({ interval, symbol, theme, indicators }) =>
   return (
     <div className="chart-container">
       <div ref={priceRef} className="price-container" onContextMenu={handleContextMenu}>
-        {showCountdown && <div ref={overlayRef} className="countdown-overlay">{countdown}</div>}
         {menuVisible && (
           <div className="axis-context-menu" style={{ top: menuPosition.y, left: menuPosition.x }}>
             <ul>
