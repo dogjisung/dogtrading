@@ -26,10 +26,6 @@ const Chart: React.FC<ChartProps> = ({ interval, symbol, theme, indicators }) =>
   const countdownLineRef = useRef<any>(null)
   // ref for last price
   const lastPriceRef = useRef<number>(0)
-  // ref to track price up/down for label color
-  const priceDirectionRef = useRef<'up'|'down'>('up')
-  // countdown timer state for candle completion
-  const [countdown, setCountdown] = useState('00:00')
   // context menu state
   const [menuVisible, setMenuVisible] = useState(false)
   const [menuPosition, setMenuPosition] = useState({ x: 0, y: 0 })
@@ -111,7 +107,7 @@ const Chart: React.FC<ChartProps> = ({ interval, symbol, theme, indicators }) =>
     })
     const priceSeries = priceChart.addSeries(CandlestickSeries)
     priceSeriesRef.current = priceSeries
-    // create countdown axis label
+    // create countdown axis label (initial placeholder)
     countdownLineRef.current = priceSeries.createPriceLine({
       price: lastPriceRef.current,
       color: 'transparent',
@@ -233,14 +229,14 @@ const Chart: React.FC<ChartProps> = ({ interval, symbol, theme, indicators }) =>
         macdLine.setData(macdTime.slice(9).map((t, i) => ({ time: t, value: macdVals[i + (26 - 12) - 9] })))
         signalLine.setData(macdTime.slice(9).map((t, i) => ({ time: t, value: signalLineArr[i] })))
         macdHist.setData(macdTime.slice(9).map((t, i) => ({ time: t, value: macdHistArr[i] })))
-        // track last price and set initial background color
-        const len = candleData.length
-        const prev = candleData[len - 2].close
-        const curr = candleData[len - 1].close
-        lastPriceRef.current = curr
-        priceDirectionRef.current = curr >= prev ? 'up' : 'down'
+        // track last closed candle and set initial background color
+        const lastRaw = rawData[rawData.length - 1]
+        const openPrice = parseFloat(lastRaw[1])
+        const closePrice = parseFloat(lastRaw[4])
+        lastPriceRef.current = closePrice
+        const initColor = closePrice >= openPrice ? '#26a69a' : '#ef5350'
         if (countdownLineRef.current) {
-          countdownLineRef.current.applyOptions({ price: curr, axisLabelColor: priceDirectionRef.current === 'up' ? '#26a69a' : '#ef5350' } as any)
+          countdownLineRef.current.applyOptions({ price: closePrice, axisLabelColor: initColor } as any)
         }
       })
 
@@ -264,12 +260,11 @@ const Chart: React.FC<ChartProps> = ({ interval, symbol, theme, indicators }) =>
       // update price & volume
       priceSeriesRef.current?.update({ time, open, high, low, close })
       volumeSeries.update({ time, value: vol, color: close > open ? '#26a69a' : '#ef5350' })
-      // update last price, direction and background
-      const prevPrice = lastPriceRef.current
+      // update last price and countdown label background based on current candle direction
       lastPriceRef.current = close
-      priceDirectionRef.current = close >= prevPrice ? 'up' : 'down'
+      const wsColor = close >= open ? '#26a69a' : '#ef5350'
       if (countdownLineRef.current) {
-        countdownLineRef.current.applyOptions({ price: close, axisLabelColor: priceDirectionRef.current === 'up' ? '#26a69a' : '#ef5350' } as any)
+        countdownLineRef.current.applyOptions({ price: close, axisLabelColor: wsColor } as any)
       }
     }
 
