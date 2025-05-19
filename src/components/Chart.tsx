@@ -243,6 +243,16 @@ const Chart: React.FC<ChartProps> = ({ interval, symbol, theme, indicators }) =>
     if (macdRef.current) {
       macdRef.current.style.display = indicators.includes('MACD') ? 'block' : 'none'
     }
+    // show or hide VWAP series on price chart
+    const showVWAP = indicators.includes('VWAP')
+    if (vwapSeriesRef.current) {
+      vwapSeriesRef.current.applyOptions({ visible: showVWAP })
+    }
+    // adjust price container height to fill remaining space when no subcharts are visible
+    if (priceRef.current) {
+      const noSubcharts = !indicators.includes('거래량') && !indicators.includes('RSI') && !indicators.includes('MACD')
+      priceRef.current.style.height = noSubcharts ? '100%' : '60vh'
+    }
   }, [indicators])
 
   return (
