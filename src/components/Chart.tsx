@@ -35,9 +35,8 @@ const Chart: React.FC<ChartProps> = ({ interval, symbol, theme, indicators }) =>
     if (overlayRef.current && priceChartRef.current) {
       const coord = (priceChartRef.current as any).priceScale().priceToCoordinate(lastPriceRef.current)
       if (coord !== null) {
-        // position countdown overlay below the price label
-        const halfHeight = overlayRef.current.offsetHeight / 2
-        overlayRef.current.style.top = `${coord + halfHeight + 2}px`
+        // position countdown overlay at the price label coordinate
+        overlayRef.current.style.top = `${coord}px`
       }
     }
   }
