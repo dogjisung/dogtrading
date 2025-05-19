@@ -47,10 +47,13 @@ const Chart: React.FC<ChartProps> = ({ interval, symbol, theme, indicators }) =>
   // helper to position overlay under price label using right price scale
   const updateOverlayPosition = () => {
     if (overlayRef.current && priceChartRef.current) {
-      const scaleApi = (priceChartRef.current as any).priceScale('right')
-      const coord = scaleApi.priceToCoordinate(lastPriceRef.current)
-      if (coord !== null) {
-        overlayRef.current.style.top = `${coord}px`
+      // use default price scale (right axis)
+      const scaleApi = (priceChartRef.current as any).priceScale()
+      if (typeof scaleApi.priceToCoordinate === 'function') {
+        const coord = scaleApi.priceToCoordinate(lastPriceRef.current)
+        if (coord !== null) {
+          overlayRef.current.style.top = `${coord}px`
+        }
       }
     }
   }
