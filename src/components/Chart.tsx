@@ -91,13 +91,13 @@ const Chart: React.FC<ChartProps> = ({ interval, symbol, theme, indicators }) =>
     })
     const priceSeries = priceChart.addSeries(CandlestickSeries)
     priceSeriesRef.current = priceSeries
-    // create price line for countdown label on right axis
+    // create price line for countdown label on right axis (cast to any to allow custom styling)
     countdownLineRef.current = priceSeries.createPriceLine({
       price: 0, // will update after data load
       color: 'transparent',
       axisLabelVisible: true,
       title: countdown,
-    })
+    } as any)
     // initialize markers plugin
     markersApiRef.current = createSeriesMarkers(priceSeries, [], { zOrder: 'top' })
     // VWAP series
@@ -210,9 +210,14 @@ const Chart: React.FC<ChartProps> = ({ interval, symbol, theme, indicators }) =>
         macdLine.setData(macdTime.slice(9).map((t, i) => ({ time: t, value: macdVals[i + (26 - 12) - 9] })))
         signalLine.setData(macdTime.slice(9).map((t, i) => ({ time: t, value: signalLineArr[i] })))
         macdHist.setData(macdTime.slice(9).map((t, i) => ({ time: t, value: macdHistArr[i] })))
-        // update countdown price line to last close price
-        const lastPrice = candleData[candleData.length - 1].close
-        countdownLineRef.current?.applyOptions({ price: lastPrice })
+        // initial countdown label setup: position at last close and color based on candle direction
+        const lastCandle = rawData[rawData.length - 1]
+        const lastOpen = parseFloat(lastCandle[1]); const lastClose = parseFloat(lastCandle[4])
+        countdownLineRef.current?.applyOptions({
+          price: lastClose,
+          axisLabelBackgroundColor: lastClose > lastOpen ? '#26a69a' : '#ef5350',
+          axisLabelColor: '#fff',
+        } as any)
       })
 
     // WebSocket for real-time updates
@@ -235,8 +240,12 @@ const Chart: React.FC<ChartProps> = ({ interval, symbol, theme, indicators }) =>
       // update price & volume
       priceSeriesRef.current?.update({ time, open, high, low, close })
       volumeSeries.update({ time, value: vol, color: close > open ? '#26a69a' : '#ef5350' })
-      // update countdown price line position to follow last price
-      countdownLineRef.current?.applyOptions({ price: close })
+      // update countdown label position and color on new candle
+      countdownLineRef.current?.applyOptions({
+        price: close,
+        axisLabelBackgroundColor: close > open ? '#26a69a' : '#ef5350',
+        axisLabelColor: '#fff',
+      } as any)
     }
 
     return () => {
