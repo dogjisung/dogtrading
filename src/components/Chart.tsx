@@ -117,7 +117,7 @@ const Chart: React.FC<ChartProps> = ({ interval, symbol, theme, indicators }) =>
       color: 'transparent',
       lineWidth: 0,
       axisLabelVisible: true,
-      axisLabelBackgroundColor: '#0097A7',
+      axisLabelColor: '#0097A7',
       axisLabelTextColor: '#FFFFFF',
       title: countdown,
     } as any)
@@ -240,7 +240,7 @@ const Chart: React.FC<ChartProps> = ({ interval, symbol, theme, indicators }) =>
         lastPriceRef.current = curr
         priceDirectionRef.current = curr >= prev ? 'up' : 'down'
         if (countdownLineRef.current) {
-          countdownLineRef.current.applyOptions({ price: curr, axisLabelBackgroundColor: priceDirectionRef.current === 'up' ? '#26a69a' : '#ef5350' } as any)
+          countdownLineRef.current.applyOptions({ price: curr, axisLabelColor: priceDirectionRef.current === 'up' ? '#26a69a' : '#ef5350' } as any)
         }
       })
 
@@ -269,7 +269,7 @@ const Chart: React.FC<ChartProps> = ({ interval, symbol, theme, indicators }) =>
       lastPriceRef.current = close
       priceDirectionRef.current = close >= prevPrice ? 'up' : 'down'
       if (countdownLineRef.current) {
-        countdownLineRef.current.applyOptions({ price: close, axisLabelBackgroundColor: priceDirectionRef.current === 'up' ? '#26a69a' : '#ef5350' } as any)
+        countdownLineRef.current.applyOptions({ price: close, axisLabelColor: priceDirectionRef.current === 'up' ? '#26a69a' : '#ef5350' } as any)
       }
     }
 
