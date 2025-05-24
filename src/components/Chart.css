@@ -1,23 +1,32 @@
 .chart-container {
-  position: relative;
+  display: flex;
+  flex-direction: column;
   width: 100%;
   height: 100%;
 }
 
+.chart-container.light {
+  background-color: #ffffff;
+}
+
+.chart-container.dark {
+  background-color: #131722;
+}
+
+/* .price-container height is controlled by flex weights */
 .price-container {
   position: relative;
   width: 100%;
-  height: 60vh;
 }
 
+/* .volume-container height is controlled by flex weights */
 .volume-container {
   width: 100%;
-  height: 15vh;
 }
 
+/* .indicator-container height is controlled by flex weights */
 .indicator-container {
   width: 100%;
-  height: 12.5vh;
 }
 
 /* Multi-timeframe subchart layout */
@@ -64,4 +73,30 @@
   height: 1px;
   margin: 4px 0;
   background: #30323b;
+}
+
+/* Add styles for manual resizing */
+.resizer {
+  flex-shrink: 0;
+  width: 100%;
+  height: 4px;
+  background: #2a2e39;
+  cursor: row-resize;
+  z-index: 10;
+}
+.resizer:hover {
+  background: #444;
+}
+
+/* Container for the stacked indicator panes */
+.subcharts-container {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+/* Ensure each subchart (volume, RSI, MACD) fills its share of the container */
+.subcharts-container > .volume-container,
+.subcharts-container > .indicator-container {
+  flex: 1 1 0;
 } 

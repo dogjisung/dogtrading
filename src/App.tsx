@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import './App.css'
 import Chart from './components/Chart'
-import TVHeader from './components/TVHeader'
 
 function App() {
   // remove trailing slash from root URL
@@ -45,20 +44,19 @@ function App() {
     localStorage.setItem('indicators', JSON.stringify(selectedIndicators))
   }, [selectedIndicators])
 
+  // add exchange selection state
+  const [exchange, setExchange] = useState<string>(() => {
+    const saved = localStorage.getItem('exchange')
+    return saved ?? 'BINANCE'
+  })
+  useEffect(() => {
+    localStorage.setItem('exchange', exchange)
+  }, [exchange])
+
   return (
     <div className="app-container">
-      <TVHeader
-        symbol={symbol}
-        onSymbolChange={setSymbol}
-        interval={interval}
-        onIntervalChange={setInterval}
-        theme={theme}
-        onThemeToggle={() => setTheme(theme === 'light' ? 'dark' : 'light')}
-        indicators={selectedIndicators}
-        onIndicatorsChange={setSelectedIndicators}
-      />
       <div className="chart-wrapper">
-        <Chart symbol={symbol} interval={interval} theme={theme} indicators={selectedIndicators} />
+        <Chart exchange={exchange} symbol={symbol} interval={interval} theme={theme} indicators={selectedIndicators} />
       </div>
     </div>
   )
